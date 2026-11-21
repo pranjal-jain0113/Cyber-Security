@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard | Intelligent Phishing URL & Domain Security Analyzer</title>
+    <!-- Tailwind CSS CDN for rapid, clean styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#090d16',
+                        cardBg: '#111827',
+                        neonGreen: '#10b981',
+                        neonRed: '#ef4444',
+                        neonYellow: '#f59e0b',
+                        cyberBlue: '#3b82f6'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-darkBg text-gray-100 font-sans min-h-screen flex flex-col justify-between selection:bg-cyberBlue selection:text-white">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-gray-800 bg-cardBg/50 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyberBlue to-indigo-600 flex items-center justify-center shadow-lg shadow-cyberBlue/20">
+                    <i class="fa-solid fa-shield-halved text-xl text-white"></i>
+                </div>
+                <span class="text-xl font-bold tracking-wider bg-gradient-to-r from-white via-gray-200 to-cyberBlue bg-clip-text text-transparent">
+                    PHISH<span class="text-cyberBlue">GUARD</span>
+                </span>
+            </div>
+            <nav class="hidden md:flex space-x-6 text-sm font-medium text-gray-400">
+                <a href="#analyzer" class="hover:text-cyberBlue transition">Analyzer</a>
+                <a href="#dashboard" class="hover:text-cyberBlue transition">Security Report</a>
+                <a href="#education" class="hover:text-cyberBlue transition">Phishing 101</a>
+            </nav>
+            <div>
+                <span class="text-xs px-3 py-1 rounded-full bg-cyberBlue/10 text-cyberBlue border border-cyberBlue/30">
+                    <i class="fa-solid fa-terminal mr-1"></i> SecOps v1.0
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-grow">
+        
+        <!-- Hero Section -->
+        <div class="text-center max-w-3xl mx-auto mb-12">
+            <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 text-white">
+                Intelligent Phishing & Domain <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyberBlue to-teal-400">Security Analyzer</span>
+            </h1>
+            <p class="text-gray-400 text-lg">
+                Perform static heuristic checks, detect advanced typosquatting attempts, inspect SSL certificates, and calculate a comprehensive risk index in seconds.
+            </p>
+        </div>
+
+        <!-- URL Input Card -->
+        <div id="analyzer" class="max-w-3xl mx-auto bg-cardBg border border-gray-800 rounded-2xl p-6 sm:p-8 shadow-2xl mb-12 relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-cyberBlue/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <form id="auditForm" class="space-y-4">
+                <label for="urlInput" class="block text-sm font-medium text-gray-300">
+                    <i class="fa-solid fa-link text-cyberBlue mr-2"></i> Enter Target URL or Domain:
+                </label>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="relative flex-grow">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500">
+                            <i class="fa-solid fa-globe"></i>
+                        </span>
+                        <input type="text" id="urlInput" name="url" required
+                            placeholder="e.g., https://g00gle-login.com/auth or 192.168.1.50"
+                            class="w-full bg-gray-900 border border-gray-700 rounded-xl py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-cyberBlue focus:ring-1 focus:ring-cyberBlue transition">
+                    </div>
+                    <button type="submit" id="submitBtn"
+                        class="bg-cyberBlue hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl transition flex items-center justify-center space-x-2 shadow-lg shadow-cyberBlue/30 cursor-pointer">
+                        <i class="fa-solid fa-shield-cat" id="btnIcon"></i>
+                        <span id="btnText">Analyze URL</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Loading Spinner State (Hidden by default) -->
+        <div id="loadingState" class="hidden text-center py-16">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-cyberBlue border-t-transparent mb-4"></div>
+            <p class="text-gray-400 font-medium tracking-wide">Inspecting heuristics, querying WHOIS & verifying SSL...</p>
+        </div>
+
+        <!-- Results Section (Hidden until analyzed) -->
+        <div id="resultsContainer" class="hidden space-y-8">
+            
+            <!-- Dashboard Grid -->
+            <div id="dashboard" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Risk Score Card -->
+                <div class="bg-cardBg border border-gray-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-xl">
+                    <h3 class="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-4">Overall Risk Index</h3>
+                    <div class="relative flex items-center justify-center mb-4">
+                        <!-- Score Circle Gauge Placeholder -->
+                        <div id="riskCircle" class="w-32 h-32 rounded-full border-8 border-gray-800 flex items-center justify-center">
+                            <span id="riskScoreVal" class="text-4xl font-black text-white">0</span>
+                        </div>
+                    </div>
+                    <div id="riskBadge" class="px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide">
+                        --
+                    </div>
+                    <p id="riskDescription" class="text-xs text-gray-400 mt-3"></p>
+                </div>
+
+                <!-- Domain & SSL Quick Intel -->
+                <div class="lg:col-span-2 bg-cardBg border border-gray-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-4">
+                            <i class="fa-solid fa-server mr-2 text-cyberBlue"></i> Domain & SSL Intelligence
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                            <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-800">
+                                <span class="text-gray-500 block text-xs mb-1">Target Domain</span>
+                                <span id="resDomain" class="font-mono text-white font-medium">--</span>
+                            </div>
+                            <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-800">
+                                <span class="text-gray-500 block text-xs mb-1">Domain Age</span>
+                                <span id="resDomainAge" class="font-mono font-medium">--</span>
+                            </div>
+                            <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-800">
+                                <span class="text-gray-500 block text-xs mb-1">SSL Certificate</span>
+                                <span id="resSslStatus" class="font-mono font-medium">--</span>
+                            </div>
+                            <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-800">
+                                <span class="text-gray-500 block text-xs mb-1">SSL Issuer</span>
+                                <span id="resSslIssuer" class="font-mono text-white font-medium truncate block">--</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button onclick="window.print()" class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg transition border border-gray-700 flex items-center space-x-2">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Download PDF Report</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Detailed Security Flags & Typosquatting Findings -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- Heuristic Flags Breakdown -->
+                <div class="bg-cardBg border border-gray-800 rounded-2xl p-6 shadow-xl">
+                    <h3 class="text-gray-300 font-semibold mb-4 flex items-center">
+                        <i class="fa-solid fa-triangle-exclamation text-neonYellow mr-2"></i> Heuristic & Threat Flags
+                    </h3>
+                    <div id="heuristicFlagsList" class="space-y-3">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Typosquatting & Brand Match Box -->
+                <div class="bg-cardBg border border-gray-800 rounded-2xl p-6 shadow-xl">
+                    <h3 class="text-gray-300 font-semibold mb-4 flex items-center">
+                        <i class="fa-solid fa-fingerprint text-cyberBlue mr-2"></i> Typosquatting Analysis
+                    </h3>
+                    <div id="typosquattingContainer">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Educational Section -->
+        <div id="education" class="mt-20 border-t border-gray-800 pt-12">
+            <h2 class="text-2xl font-bold mb-6 text-center">Phishing Awareness & Defense Center</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-cardBg border border-gray-800 p-6 rounded-2xl">
+                    <div class="w-10 h-10 rounded-lg bg-red-500/10 text-neonRed flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-mask"></i>
+                    </div>
+                    <h4 class="font-semibold text-white mb-2">Typosquatting Trickery</h4>
+                    <p class="text-gray-400 text-sm">Attackers register lookalike domains swapping characters (e.g., using zeros for 'o' or hyphens) to spoof high-trust corporate brands.</p>
+                </div>
+                <div class="bg-cardBg border border-gray-800 p-6 rounded-2xl">
+                    <div class="w-10 h-10 rounded-lg bg-yellow-500/10 text-neonYellow flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-certificate"></i>
+                    </div>
+                    <h4 class="font-semibold text-white mb-2">Misleading SSL Illusion</h4>
+                    <p class="text-gray-400 text-sm">Having an SSL certificate (HTTPS) only means encrypted transit—it does <strong>not</strong> prove the site owner is legitimate or trustworthy.</p>
+                </div>
+                <div class="bg-cardBg border border-gray-800 p-6 rounded-2xl">
+                    <div class="w-10 h-10 rounded-lg bg-green-500/10 text-neonGreen flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <h4 class="font-semibold text-white mb-2">Zero-Trust Verification</h4>
+                    <p class="text-gray-400 text-sm">Always navigate directly to official bookmarks or applications rather than clicking links embedded inside unexpected emails or SMS.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+        <p>PhishGuard Security Analyzer &bull; Built for B.Tech Cybersecurity Project &bull; Static Analysis Only</p>
+    </footer>
+
+    <!-- Frontend Interactive Script -->
+    <script>
+        document.getElementById('auditForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const urlValue = document.getElementById('urlInput').value.trim();
+            if(!urlValue) return;
+
+            // UI State: Loading
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('submitBtn').disabled = true;
+
+            try {
+                // Replace with your Flask backend endpoint when integrated (e.g., /api/analyze)
+                // For demonstration, simulating a robust API response structure matching your modules:
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: urlValue })
+                });
+
+                // Fallback mock payload if backend route is being set up incrementally:
+                let data;
+                if (response.ok) {
+                    data = await response.json();
+                } else {
+                    // Mock data fallback for standalone UI testing
+                    data = getMockAnalysis(urlValue);
+                }
+
+                renderResults(data);
+            } catch (err) {
+                console.warn("Backend route not connected yet. Rendering simulated response for frontend preview.");
+                const mockData = getMockAnalysis(urlValue);
+                renderResults(mockData);
+            } finally {
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+
+        function getMockAnalysis(url) {
+            let score = 25;
+            let flags = [{type: "SUSPICIOUS_KEYWORDS", severity: "Medium", desc: "Contains high-risk phishing keywords: login."}];
+            let typosquat = {is_typosquatting: true, matches: [{brand: "Google", legitimate_domain: "google.com", distance: 2, reason: "Domain name 'g00gle' closely resembles protected brand 'Google'."}]};
+            return {
+                domain: "g00gle-login.com",
+                risk_score: 75,
+                risk_level: "High Risk",
+                domain_age_days: 4,
+                ssl_valid: true,
+                ssl_issuer: "Let's Encrypt Authority X3",
+                heuristic_flags: flags,
+                typosquatting: typosquat
+            };
+        }
+
+        function renderResults(data) {
+            document.getElementById('resultsContainer').classList.remove('hidden');
+            
+            // Risk Score & Gauge
+            const scoreEl = document.getElementById('riskScoreVal');
+            const badgeEl = document.getElementById('riskBadge');
+            const descEl = document.getElementById('riskDescription');
+            const circleEl = document.getElementById('riskCircle');
+
+            scoreEl.textContent = data.risk_score;
+            
+            let badgeColor = "bg-neonGreen/10 text-neonGreen border border-neonGreen/30";
+            let borderColor = "border-neonGreen";
+            let descText = "Low likelihood of malicious intent detected.";
+
+            if (data.risk_score >= 70) {
+                badgeColor = "bg-neonRed/10 text-neonRed border border-neonRed/30";
+                borderColor = "border-neonRed";
+                descText = "High threat level! Multiple phishing indicators or typosquatting match found.";
+            } else if (data.risk_score >= 40) {
+                badgeColor = "bg-neonYellow/10 text-neonYellow border border-neonYellow/30";
+                borderColor = "border-neonYellow";
+                descText = "Suspicious markers found. Proceed with caution.";
+            }
+
+            badgeEl.className = `px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide ${badgeColor}`;
+            badgeEl.textContent = data.risk_level;
+            circleEl.className = `w-32 h-32 rounded-full border-8 ${borderColor} flex items-center justify-center shadow-lg`;
+            descEl.textContent = descText;
+
+            // Domain & SSL Info
+            document.getElementById('resDomain').textContent = data.domain || 'N/A';
+            
+            const ageEl = document.getElementById('resDomainAge');
+            if (data.domain_age_days !== undefined) {
+                ageEl.textContent = `${data.domain_age_days} days old`;
+                ageEl.className = data.domain_age_days < 30 ? "font-mono text-neonRed font-semibold" : "font-mono text-neonGreen font-semibold";
+            } else {
+                ageEl.textContent = "Unknown / Unavailable";
+            }
+
+            const sslEl = document.getElementById('resSslStatus');
+            sslEl.textContent = data.ssl_valid ? "Valid Certificate" : "Invalid / Missing";
+            sslEl.className = data.ssl_valid ? "font-mono text-neonGreen font-semibold" : "font-mono text-neonRed font-semibold";
+            document.getElementById('resSslIssuer').textContent = data.ssl_issuer || "Self-Signed / None";
+
+            // Heuristic Flags
+            const flagsList = document.getElementById('heuristicFlagsList');
+            flagsList.innerHTML = "";
+            if (data.heuristic_flags && data.heuristic_flags.length > 0) {
+                data.heuristic_flags.forEach(flag => {
+                    flagsList.innerHTML += `
+                        <div class="bg-gray-900/60 border border-gray-800 p-3.5 rounded-xl flex items-start space-x-3">
+                            <i class="fa-solid fa-circle-exclamation text-neonYellow mt-0.5"></i>
+                            <div>
+                                <span class="text-xs font-bold text-yellow-400 block mb-0.5">${flag.type}</span>
+                                <span class="text-gray-300 text-xs">${flag.desc}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                flagsList.innerHTML = `<div class="text-gray-500 text-sm italic py-4 text-center">No heuristic anomaly flags triggered.</div>`;
+            }
+
+            // Typosquatting Results
+            const typoContainer = document.getElementById('typosquattingContainer');
+            typoContainer.innerHTML = "";
+            if (data.typosquatting && data.typosquatting.is_typosquatting) {
+                data.typosquatting.matches.forEach(m => {
+                    typoContainer.innerHTML += `
+                        <div class="bg-red-950/20 border border-red-900/50 p-4 rounded-xl">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-bold px-2.5 py-0.5 rounded bg-red-500/10 text-neonRed">Impersonation Target: ${m.brand}</span>
+                                <span class="text-xs font-mono text-gray-400">Levenshtein: ${m.distance}</span>
+                            </div>
+                            <p class="text-sm text-gray-300 mb-2">${m.reason}</p>
+                            <span class="text-xs text-gray-500 block">Legitimate Brand Domain: <code class="text-cyberBlue">${m.legitimate_domain}</code></span>
+                        </div>
+                    `;
+                });
+            } else {
+                typoContainer.innerHTML = `<div class="bg-gray-900/60 border border-gray-800 p-6 rounded-xl text-center"><span class="text-neonGreen text-sm font-medium"><i class="fa-solid fa-circle-check mr-1"></i> No brand typosquatting detected.</span></div>`;
+            }
+
+            // Smooth scroll to results
+            document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

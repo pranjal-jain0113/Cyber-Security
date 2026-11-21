@@ -1,0 +1,6 @@
+Flask>=3.0
+requests>=2.31
+tldextract>=5.1
+python-whois>=0.9
+reportlab>=4.0        # PDF report (Step 5)
+pytest>=8.0
